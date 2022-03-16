@@ -1,0 +1,128 @@
+from google.colab import drive
+drive.mount('/content/drive')
+
+# TensorFlow and tf.keras
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense
+from sklearn.model_selection import train_test_split
+
+# Commonly used modules
+import numpy as np
+import os
+import sys
+
+# Images, plots, display, and visualization
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import cv2
+import IPython
+from six.moves import urllib
+
+print(tf.__version__)
+
+# sensitive_cols = ['Gender']
+sensitive_cols = ['Gender','Race_Reported','Race_OMB','Ethnicity_OMB']
+basic_info_cols = ['Age','Height_cm','Weight_kg']
+medication_cols = []
+# medication_cols = ['Medications', 'Aspirin']
+preexisting_cols = []
+# preexisting_cols = ['Current_Smoker']
+
+dosage_cols = ['Therapeutic_Dose_of_Warfarin']  # The Y column
+
+# Columns that are categories, not value (int, like Age and Height)
+category_cols = sensitive_cols + medication_cols + preexisting_cols + ['Age']
+
+data_root_dir = '/content/drive/MyDrive/Colab Notebooks/NIPS/'
+data_file_path = data_root_dir + 'IWPC_Data_Set_PS206767-553247439 - Subject Data.csv'
+
+raw_data = pd.read_csv(
+    data_file_path,
+    index_col=False, 
+    dtype = dict.fromkeys(category_cols, 'category'))
+
+raw_data[category_cols] = raw_data[category_cols].apply(lambda x: x.cat.codes)
+
+# Create training and test sets
+train_data, test_data = train_test_split(
+    raw_data.loc[:,raw_data.columns.isin(
+        sensitive_cols + basic_info_cols + medication_cols + preexisting_cols + dosage_cols)],
+    random_state = 1234,
+    test_size = 0.2);
+train_data = train_data.dropna()
+test_data = test_data.dropna()
+x_columns = sensitive_cols + basic_info_cols + medication_cols + preexisting_cols
+y_columns = dosage_cols
+
+
+def split_xy(data, x_col, y_col):
+  return (np.asarray(data.loc[:, data.columns.isin(x_col)].to_numpy()).astype('float32'),
+          np.asarray(data.loc[:, data.columns.isin(y_col)].to_numpy()).astype('float32'))
+train_features, train_labels = split_xy(train_data, x_columns, y_columns)
+test_features, test_labels = split_xy(test_data, x_columns, y_columns)
+print(train_features)
+print(train_labels)
+print(test_features)
+print(test_labels)
+
+# get per-feature statistics (mean, standard deviation) from the training set to normalize by
+train_mean = np.mean(train_features, axis=0)
+train_std = np.std(train_features, axis=0)
+train_features = (train_features - train_mean) / train_std
+
+print(train_mean)
+print('--------')
+print(train_std)
+print('--------')
+print(train_features)
+
+def build_model():
+    model = keras.Sequential([
+        Dense(20, activation=tf.nn.relu, input_shape=[len(train_features[0])]),
+        Dense(1)
+    ])
+
+    model.compile(optimizer=tf.optimizers.Adam(), 
+                  loss='mse',
+                  metrics=['mae', 'mse'])
+    return model
+
+model = build_model()
+
+# this helps makes our output less verbose but still shows progress
+class PrintDot(keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs):
+        if epoch % 100 == 0: print('')
+        print('.', end='')
+
+print(model.summary())
+
+early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
+history = model.fit(train_features, train_labels, epochs=1000, verbose=0, validation_split = 0.1,
+                    callbacks=[early_stop, PrintDot()])
+
+hist = pd.DataFrame(history.history)
+hist['epoch'] = history.epoch
+print(hist)
+# show RMSE measure to compare to Kaggle leaderboard on https://www.kaggle.com/c/boston-housing/leaderboard
+rmse_final = np.sqrt(float(hist['val_mae'].tail(1)))
+print()
+print('Final Root Mean Square Error on validation set: {}'.format(round(rmse_final, 3)))
+
+def plot_history():
+    plt.figure()
+    plt.xlabel('Epoch')
+    plt.ylabel('Mean Square Error [Thousand Dollars$^2$]')
+    plt.plot(hist['epoch'], hist['mse'], label='Train Error')
+    plt.plot(hist['epoch'], hist['val_mse'], label = 'Val Error')
+    plt.legend()
+    plt.ylim([0,50])
+
+plot_history()
+
+test_features_norm = (test_features - train_mean) / train_std
+mse, _, _ = model.evaluate(test_features_norm, test_labels)
+rmse = np.sqrt(mse)
+print('Root Mean Square Error on test set: {}'.format(round(rmse, 3)))
