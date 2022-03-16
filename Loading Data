@@ -1,0 +1,35 @@
+data_file_path = data_root_dir + 'IWPC_Data_Set_PS206767-553247439 - Subject Data.csv'
+
+# Setting up different groups of features
+sensitive_cols = ['Gender','Race_Reported','Race_OMB','Ethnicity_OMB']
+basic_info_cols = ['Age','Height_cm','Weight_kg']
+medication_cols = ['Medications', 'Aspirin']
+preexisting_cols = ['Current_Smoker']
+dosage_cols = ['Therapeutic_Dose_of_Warfarin']  # The Y column
+
+cat_cols = sensitive_cols + medication_cols + preexisting_cols
+
+raw_data = pd.read_csv(
+    data_file_path,
+    index_col=False, 
+    dtype = dict.fromkeys(cat_cols, 'category'))
+    
+# Preparing for test data set. Sometimes test data contains more unique values in certain columns than training data set, resulting in error
+def preset_categories(column):
+  raw_data[column].cat.set_categories(raw_data[column].unique().dropna())
+
+for col in sensitive_cols:
+  preset_categories(col)
+
+for col in medication_cols:
+  preset_categories(col)
+
+for col in preexisting_cols:
+  preset_categories(col)
+
+# Creating training and test sets
+train_data, test_data = train_test_split(
+    raw_data.loc[:,raw_data.columns.isin(
+        sensitive_cols + basic_info_cols + medication_cols + preexisting_cols + dosage_cols)],
+    random_state = 1234,
+    test_size = 0.2);
