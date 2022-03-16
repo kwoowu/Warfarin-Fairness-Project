@@ -1,0 +1,38 @@
+# Defining utility
+def utility(prediction, real_dose):
+  return calculate_RMSE(prediction, real_dose) + calculate_MAE(prediction, real_dose) + calculate_MAPE(prediction, real_dose)
+
+# Defining treatment fairness (how similarly the algorithm treats members of different groups)
+def treatment_f(test_data_used, train_data_used, attribute, s0, s1):
+  test_data_0 = test_data_used.groupby([attribute]).get_group(s1)
+  test_data_1 = test_data_used.groupby([attribute]).get_group(s0)
+
+  predict_0 = sm_fit_and_predict(train_data_used, 
+                                 test_data_0, 
+                                 dosage_cols[0], 
+                                 sensitive_cols, 
+                                 basic_info_cols, 
+                                 medication_cols, 
+                                 preexisting_cols)
+    
+  predict_1 = sm_fit_and_predict(train_data_used, 
+                                 test_data_1, 
+                                 dosage_cols[0], 
+                                 sensitive_cols, 
+                                 basic_info_cols, 
+                                 medication_cols, 
+                                 preexisting_cols)
+  
+  dosage_0 = test_data_0['Therapeutic_Dose_of_Warfarin']
+  dosage_1 = test_data_1['Therapeutic_Dose_of_Warfarin']
+
+  return abs(calculate_RMSE(predict_0, dosage_0) - calculate_RMSE(predict_1, dosage_1))
+  + abs(calculate_MAE(predict_0, dosage_0) - calculate_MAE(predict_1, dosage_1))
+  + abs(calculate_MAPE(predict_0, dosage_0) - calculate_MAPE(predict_1, dosage_1))
+  
+# Defining outcome fairness (how similarly the algorithm treats members of different groups, given that they were supposed to get similar treatments)
+def outcome_f(test_data_used, train_data_used, attribute, s0, s1):
+  mean_dosage = test_data_used['Therapeutic_Dose_of_Warfarin'].mean()
+  mean_sorted_data = test_data_used[test_data_used['Therapeutic_Dose_of_Warfarin'] > mean_dosage]
+  
+  return treatment_f(mean_sorted_data, train_data_used, attribute, s0, s1)
