@@ -1,0 +1,64 @@
+# Defining algorithm for linear regression
+def sm_fit_and_predict(training_data_used, 
+                       test_data_used, 
+                       column_Y_name, 
+                       sensitive_cols_used, 
+                       basic_info_cols_used, 
+                       medication_cols_used, 
+                       preexisting_cols_used):
+                       
+  r_formula = (dosage_cols[0] + ' ~ ' 
+      + ' + '.join(sensitive_cols_used) + " + " 
+      + ' + '.join(basic_info_cols_used) + " + " 
+      + ' + '.join(medication_cols_used) + " + " 
+      + ' + '.join(preexisting_cols_used))
+  
+  mod = smf.ols(formula = r_formula, data = training_data_used)
+  res = mod.fit()
+
+  return res.predict(exog=test_data_used)
+  
+# Defining function for calculating RMSE (root mean square error)
+def calculate_RMSE(predicted_dose, actual_dose):
+  # determines how many cases there are
+  numCases = len(actual_dose.index)
+
+  # takes the square of the difference of the actual value vs. the predicted value
+  difference = (actual_dose - predicted_dose)**2
+
+  # takes the sum of the differences
+  sumDiff = difference.sum()
+  
+  # finds and returns the RMSE
+  rmse = (sumDiff / numCases)**0.5
+  return(rmse)
+
+# Defining function for calculating MAE (mean absolute error)
+def calculate_MAE(predicted_dose, actual_dose):
+  # determines how many cases there are
+  numCases = len(actual_dose.index)
+
+  # takes the absolute value of the difference of the actual value vs. the predicted value
+  difference = abs(actual_dose - predicted_dose)
+
+  # takes the sum of the differences
+  sumDiff = difference.sum()
+  
+  # finds and returns the MAE
+  mae = sumDiff / numCases
+  return(mae)
+
+# Defining function for calculating MAPE (mean absolute percent error)
+def calculate_MAPE(predicted_dose, actual_dose):
+  # determines how many cases there are
+  numCases = len(actual_dose.index)
+
+  # gives us the absolute value of: (actual value - predicted value)/(actual value)
+  difference = abs((actual_dose - predicted_dose)/actual_dose)
+
+  # takes the sum of the differences
+  sumDiff = difference.sum()
+  
+  # finds and returns the MAPE
+  mape = sumDiff / numCases
+  return(mape)
