@@ -1,0 +1,37 @@
+# Utility when using the general training set
+test_u = utility(predict, test_data['Therapeutic_Dose_of_Warfarin'])
+print(test_u)
+
+
+# Fairness based on biological sex using the general training set
+tf_gender = treatment_f(test_data, train_data, 'Gender', 'male', 'female')
+of_gender = outcome_f(test_data, train_data, 'Gender', 'male', 'female')
+
+print(tf_gender)
+print(of_gender)
+
+# Fairness based on race using the general training set
+tf_race = treatment_f(test_data, train_data, 'Race_OMB',  'White', 'Black or African American')
+of_race = outcome_f(test_data, train_data, 'Race_OMB', 'White', 'Black or African American')
+
+print(tf_race)
+print(of_race)
+
+# Fairness and utility based on biological sex using the sex-equalized training set
+u_equal_gender = utility(predict_equal_gender, test_data['Therapeutic_Dose_of_Warfarin'])
+tf_equal_gender = treatment_f(test_data, equal_gender_training_data, 'Gender', 'male', 'female')
+of_equal_gender = outcome_f(test_data, equal_gender_training_data, 'Gender', 'male', 'female')
+
+print(u_equal_gender)
+print(tf_equal_gender)
+print(of_equal_gender)
+
+
+# Fairness and utility based on race using the race-equalized training set
+u_equal_race = utility(predict_equal_race, test_data['Therapeutic_Dose_of_Warfarin'])
+race_tf_equal = treatment_f(test_data, equal_race_training_data, 'Race_OMB', 'White', 'Black or African American')
+race_of_equal = outcome_f(test_data, equal_race_training_data, 'Race_OMB', 'White', 'Black or African American')
+
+print(u_equal_race)
+print(race_tf_equal)
+print(race_of_equal)
