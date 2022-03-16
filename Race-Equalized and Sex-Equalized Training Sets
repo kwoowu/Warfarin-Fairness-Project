@@ -1,0 +1,24 @@
+# Divide into male and female
+female_group = train_data.groupby(['Gender']).get_group('female')
+male_group = train_data.groupby(['Gender']).get_group('male')
+
+# Remove data points from the male group so that it is the same size as the female group
+shortened_male_group = male_group.sample(n = len(female_group.index), replace=True)
+
+# This training set has equal numbers of males and females
+equal_gender_training_data = pd.concat([female_group,shortened_male_group])
+
+# Divide into groups based on race
+white_group = train_data.groupby(['Race_OMB']).get_group('White')
+black_group = train_data.groupby(['Race_OMB']).get_group('Black or African American')
+asian_group = train_data.groupby(['Race_OMB']).get_group('Asian')
+unknown_group = train_data.groupby(['Race_OMB']).get_group('Unknown')
+
+# Remove data points from the Asian group, the white group, and the Black group
+shortened_asian_group = asian_group.sample(n = len(unknown_group.index), replace=True)
+shortened_white_group = white_group.sample(n = len(unknown_group.index), replace=True)
+shortened_black_group = black_group.sample(n = len(unknown_group.index), replace=True)
+
+# This training set has equal numbers of Black people, white people, and Asians
+equal_race_training_data = pd.concat([shortened_asian_group, shortened_white_group, shortened_black_group, unknown_group])
+    
