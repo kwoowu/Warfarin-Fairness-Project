@@ -1,0 +1,35 @@
+# Running linear regression using the general training set
+predict = sm_fit_and_predict(
+    train_data, 
+    test_data, 
+    dosage_cols[0], 
+    sensitive_cols, 
+    basic_info_cols, 
+    medication_cols, 
+    preexisting_cols)
+    
+print(predict)
+
+# Running linear regression using the gender-equalized training set
+predict_equal_gender = sm_fit_and_predict(
+    equal_gender_training_data, 
+    test_data, 
+    dosage_cols[0], 
+    sensitive_cols, 
+    basic_info_cols, 
+    medication_cols, 
+    preexisting_cols)
+    
+print(predict_equal_gender)
+
+# Running linear regression using the race-equalized training set
+predict_equal_race = sm_fit_and_predict(
+    equal_race_training_data, 
+    test_data, 
+    dosage_cols[0], 
+    sensitive_cols, 
+    basic_info_cols, 
+    medication_cols, 
+    preexisting_cols)
+  
+ print(predict_equal_race)
