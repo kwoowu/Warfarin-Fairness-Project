@@ -1,0 +1,11 @@
+from google.colab import drive
+drive.mount('/content/drive')
+
+import pandas as pd
+import pystan
+import numpy as np
+from sklearn.model_selection import train_test_split
+import pickle
+import statsmodels.formula.api as smf
+
+data_root_dir = '/content/drive/MyDrive/Colab Notebooks/NIPS/'
